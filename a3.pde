@@ -13,6 +13,7 @@ float[][] slope;
 float[][] intercept;
 float[][] y;
 int id;
+int ix, iy, ex, ey;
 
 float ypercent;
 float xpercent;
@@ -37,7 +38,8 @@ int stx, sty;
 int enx, eny;
 boolean bounding;
 
-PGraphics select = null;
+PGraphics online = null;
+PGraphics inbox = null;
 
 void setup(){
   size(800, 640);
@@ -88,7 +90,8 @@ void setup(){
   //printArray(flip);
   newcolor = new color[m][n];
   
-  select = createGraphics(width, height);
+  online = createGraphics(width, height);
+  inbox = createGraphics(width, height);
 }
 
 void draw() {
@@ -199,31 +202,51 @@ void draw() {
           text(data[k][j], pointx[k][j]+margin/4, pointy[k][j]);
         }
       }
+      // box
+      if (dotInbox(i,j)) {
+        for (int k = 0; k<m; k++) {
+          if (k>0) {
+            strokeWeight(5);
+            stroke(0,255,255);
+            line(pointx[k-1][j], pointy[k-1][j], pointx[k][j], pointy[k][j]);
+          }
+          fill(255); strokeWeight(1);
+          rect(pointx[k][j]+margin/5, pointy[k][j], 1.2*margin, margin/3);
+          fill(0); textAlign(LEFT, TOP);
+          text(data[k][j], pointx[k][j]+margin/4, pointy[k][j]);
+        }
+      }
     } 
   }
   //if (bounding == true) {
   stroke(0);
   fill(255, 100);
   if (mousePressed) {
+    stx = mouseX;
+    sty = mouseY;
     if (mouseY>ypercent*1.4*margin && mouseY<ypercent*(1.4*margin+(640-2*1.6*margin))) {
     
       cursor(CROSS);
-      enx = mouseX;
-      eny = mouseY;
+      
       //enx = 0;
       //eny = 0;
       if (stx>0 && enx>0 && sty>ypercent*1.4*margin && sty<ypercent*(1.4*margin+(640-2*1.6*margin))) { 
         fill(255, 128);
         rect(0,0,width,height);
         rect(stx, sty, enx-stx, eny-sty);
+        println(stx + " " + sty + " " + enx + " " + eny);
+        ix = stx; iy = sty; ex = enx; ey = eny;
+        drawInbox(ix,iy,ex,ey);
       }
       //println(stx);
       //println(enx);
     }
   }
   if (keyPressed) {
-    drawSelect();
-    image(select, 0, 0);
+    //drawOnline();
+    //image(online, 0, 0);
+    //drawInbox(stx,sty,enx,eny);
+    image(inbox, 0, 0);
   }
   //printArray(colors);
 }
@@ -248,59 +271,49 @@ void mouseClicked() {
 
 void mouseReleased() {
   bounding = true;
-  stx = mouseX;
-  sty = mouseY;
+  enx = mouseX;
+  eny = mouseY;
   cursor(ARROW);
+  //println(stx + " " + sty + " " + enx + " " + eny); 
 }
 
-void drawSelect(){
-  select.beginDraw();
-  select.background(255);
+void drawOnline(){
+  online.beginDraw();
+  online.background(255);
   for (int i = 1; i<m; i++) {
     for (int j = 0; j<n; j++) {
-      select.strokeWeight(5);
-      
-      //println(colors[j]);
-      //if(highlight == j) strokeWeight(5);
-      select.stroke(colors[j]);
-      select.line(pointx[i-1][j], pointy[i-1][j], pointx[i][j], pointy[i][j]);
+      online.strokeWeight(5);
+      online.stroke(colors[j]);
+      online.line(pointx[i-1][j], pointy[i-1][j], pointx[i][j], pointy[i][j]);
     }
   }
-  select.endDraw();
+  online.endDraw();
 }
 
 boolean mouseOnLine(int a, int b, int id) {
   boolean on = false;
-  drawSelect();
+  drawOnline();
   //println(a + " " + b + " " +select.get(a,b) + " " + colors[id]);
-    if (select.get(a,b) == colors[id]) { //*0.9 && select.get(a,b) >= colors[id]*1.1) {  
-      //println(a + " " + b + " " + select.get(a,b)+ " " + id + " " + (-16777216+id));
-      //return j;
-      on = true;
+  if (online.get(a,b) == colors[id]) {
+    on = true;
   }
   return on; 
-  //else on = false;
-  //if (a>0 && mouseX>pointx[a-1][0]+5 && mouseX<pointx[a][0]-5 && mouseY > slope[a-1][b]*mouseX + intercept[a-1][b] - 2 && mouseY > slope[a-1][b]*mouseX + intercept[a-1][b] + 2) {
-  //  //on = true;
-  //  stroke(255);
-  //  fill(0);
-  //  textAlign(LEFT, TOP);
-  //  strokeWeight(5);
-  //  stroke(255,255,0);
-  //  for (int k = 1; k<m; k++) {
-  //    line(pointx[k-1][b], pointy[k-1][b], pointx[k][b], pointy[k][b]);
-  //    //println(j);
-  //  }
-  //  for (int l = 0; l<m; l++) {
-  //    //labels.beginDraw();
-  //    //clear();
-  //    fill(255); strokeWeight(1);
-  //    rect(pointx[l][b]+margin/5, pointy[l][b], 1.2*margin, margin/3);
-  //    fill(0);
-  //    text(data[l][b], pointx[l][b]+margin/4, pointy[l][b]);
-  //    //labels.endDraw();
-  //    //clear();
-  //    //image(labels, 0, 0);
-  //  }
-  //}
+}
+
+void drawInbox(int ix, int iy, int ex, int ey){
+  inbox.beginDraw();
+  inbox.background(255);
+  inbox.rectMode(CORNERS);
+  inbox.fill(0);
+  inbox.rect(ix,iy,ex,ey);
+  inbox.endDraw();
+}
+
+boolean dotInbox(int axis, int id) {
+  boolean in = false;
+  drawInbox(ix, iy, ex, ey);
+  if (inbox.get((int)pointx[axis][id], (int)pointy[axis][id]) == color(0)) {
+    in = true;
+  }
+  return in;
 }
